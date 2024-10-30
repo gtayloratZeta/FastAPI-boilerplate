@@ -13,6 +13,27 @@ client: Redis | None = None
 
 
 async def is_rate_limited(db: AsyncSession, user_id: int, path: str, limit: int, period: int) -> bool:
+    """
+    Checks if a user has exceeded a rate limit for a specific path within a given
+    period. It uses Redis to store the count of requests and expires the key after
+    the period, implementing a sliding window approach.
+
+    Args:
+        db (AsyncSession): Used to interact with a database.
+        user_id (int): Used to uniquely identify a user for rate limiting purposes.
+            It is used as part of the Redis key to store the rate limit information.
+        path (str): A URL path or endpoint that is being rate-limited. It is
+            sanitized before use to prevent potential security vulnerabilities.
+        limit (int): Used to specify the maximum number of requests allowed within
+            the specified time period.
+        period (int): Used to determine the window of time for which the rate
+            limiting is applied. It represents the number of seconds in the time
+            window.
+
+    Returns:
+        bool: True if the user has exceeded the specified rate limit and False otherwise.
+
+    """
     if client is None:
         logger.error("Redis client is not initialized.")
         raise Exception("Redis client is not initialized.")

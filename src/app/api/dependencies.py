@@ -24,6 +24,21 @@ DEFAULT_PERIOD = settings.DEFAULT_RATE_LIMIT_PERIOD
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)], db: Annotated[AsyncSession, Depends(async_get_db)]
 ) -> dict[str, Any] | None:
+    """
+    Authenticates a user based on a provided token, retrieves the user's data from
+    the database, and returns the user's information if authenticated successfully.
+
+    Args:
+        token (Annotated[str, Depends(oauth2_scheme)]): Annotated with two pieces
+            of information: its type is a string (`str`) and it depends on the `oauth2_scheme`.
+        db (Annotated[AsyncSession, Depends(async_get_db)]): Dependent on the
+            `async_get_db` function to provide an instance of `AsyncSession`.
+
+    Returns:
+        dict[str, Any] | None: A dictionary containing user information or None
+        if the user is not authenticated.
+
+    """
     token_data = await verify_token(token, db)
     if token_data is None:
         raise UnauthorizedException("User not authenticated.")
@@ -40,6 +55,21 @@ async def get_current_user(
 
 
 async def get_optional_user(request: Request, db: AsyncSession = Depends(async_get_db)) -> dict | None:
+    """
+    Verifies the presence of an "Authorization" header in the request, extracts a
+    Bearer token, and uses it to authenticate the user. It returns the authenticated
+    user's data if successful, or None if authentication fails or is missing.
+
+    Args:
+        request (Request): Expected to be an incoming HTTP request from a client,
+            typically obtained through a web framework such as FastAPI.
+        db (AsyncSession): Dependent on a function named `async_get_db`.
+
+    Returns:
+        dict | None: Either a dictionary containing user data or None if the user
+        is not authenticated or an error occurs.
+
+    """
     token = request.headers.get("Authorization")
     if not token:
         return None
@@ -66,6 +96,20 @@ async def get_optional_user(request: Request, db: AsyncSession = Depends(async_g
 
 
 async def get_current_superuser(current_user: Annotated[dict, Depends(get_current_user)]) -> dict:
+    """
+    Checks if the current user has superuser privileges, and if they do, returns
+    their details. If not, it raises a ForbiddenException.
+
+    Args:
+        current_user (Annotated[dict, Depends(get_current_user)]): Annotated with
+            `Depends(get_current_user)`, indicating that it depends on the
+            `get_current_user` function to resolve its value. The resolved value
+            is expected to be a dictionary.
+
+    Returns:
+        dict: The current user object, assuming the current user has sufficient privileges.
+
+    """
     if not current_user["is_superuser"]:
         raise ForbiddenException("You do not have enough privileges.")
 
@@ -75,6 +119,22 @@ async def get_current_superuser(current_user: Annotated[dict, Depends(get_curren
 async def rate_limiter(
     request: Request, db: Annotated[AsyncSession, Depends(async_get_db)], user: User | None = Depends(get_optional_user)
 ) -> None:
+    """
+    Checks if a request exceeds rate limits based on user tier and path. It retrieves
+    the user's tier and rate limit settings, then determines if the request is
+    within the allowed limit. If not, it raises a `RateLimitException`.
+
+    Args:
+        request (Request): Used to access information about the current HTTP
+            request, such as its URL path.
+        db (Annotated[AsyncSession, Depends(async_get_db)]): Scoped by the Depends
+            decorator, meaning it is provided by the async_get_db function. It
+            represents an asynchronous database session.
+        user (User | None): Optional, with a default value provided by the
+            `get_optional_user` dependency. It represents a user object, but can
+            be None if no user is authenticated.
+
+    """
     path = sanitize_path(request.url.path)
     if user:
         user_id = user["id"]

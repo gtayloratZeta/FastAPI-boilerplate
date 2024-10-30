@@ -55,6 +55,16 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    """
+    Executes database migrations using the Alembic migration tool, configuring the
+    migration context with a given database connection and then running the
+    migrations within a transaction.
+
+    Args:
+        connection (Connection): Required, indicating that an instance of the
+            Connection class must be passed when calling the function.
+
+    """
     context.configure(connection=connection, target_metadata=target_metadata)
 
     with context.begin_transaction():

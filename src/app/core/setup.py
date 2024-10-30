@@ -30,12 +30,25 @@ from ..models import *
 
 # -------------- database --------------
 async def create_tables() -> None:
+    """
+    Creates database tables based on the metadata defined in the `Base` class. It
+    uses an asynchronous connection to the database to ensure that the tables are
+    created efficiently and concurrently.
+
+    """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 # -------------- cache --------------
 async def create_redis_cache_pool() -> None:
+    """
+    Establishes a connection to a Redis database based on the URL stored in
+    `settings.REDIS_CACHE_URL` and assigns it to the `cache.pool` attribute. It
+    then creates a Redis client from the pool and assigns it to the `cache.client`
+    attribute for further use.
+
+    """
     cache.pool = redis.ConnectionPool.from_url(settings.REDIS_CACHE_URL)
     cache.client = redis.Redis.from_pool(cache.pool)  # type: ignore
 
@@ -55,6 +68,12 @@ async def close_redis_queue_pool() -> None:
 
 # -------------- rate limit --------------
 async def create_redis_rate_limit_pool() -> None:
+    """
+    Establishes a connection to a Redis database for rate limiting. It creates a
+    Redis connection pool and a client, which can be used to store and retrieve
+    rate limiting information.
+
+    """
     rate_limit.pool = redis.ConnectionPool.from_url(settings.REDIS_RATE_LIMIT_URL)
     rate_limit.client = redis.Redis.from_pool(rate_limit.pool)  # type: ignore
 
@@ -65,6 +84,16 @@ async def close_redis_rate_limit_pool() -> None:
 
 # -------------- application --------------
 async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
+    """
+    Sets the total number of threads in the current thread pool, allowing for
+    concurrent execution of tasks. It modifies the default thread limiter to have
+    the specified number of tokens, which represent available threads.
+
+    Args:
+        number_of_tokens (int): Optional. It defaults to 100 if not provided,
+            specifying the total number of tokens to be set for the thread limiter.
+
+    """
     limiter = anyio.to_thread.current_default_thread_limiter()
     limiter.total_tokens = number_of_tokens
 
@@ -85,6 +114,20 @@ def lifespan_factory(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator:
+        """
+        Manages asynchronous setup and teardown of FastAPI application components,
+        including database creation, cache and queue pool creation, and rate limiter
+        initialization, ensuring resources are properly closed when the application
+        exits.
+
+        Args:
+            app (FastAPI): Represented as an instance of the FastAPI application.
+
+        Yields:
+            AsyncGenerator: An asynchronous generator that allows other code to
+            run concurrently while the lifespan of the application is being managed.
+
+        """
         await set_threadpool_tokens()
 
         if isinstance(settings, DatabaseSettings) and create_tables_on_start:
@@ -197,14 +240,42 @@ def create_application(
 
             @docs_router.get("/docs", include_in_schema=False)
             async def get_swagger_documentation() -> fastapi.responses.HTMLResponse:
+                """
+                Generates and returns an HTML response for Swagger UI, a tool for
+                exploring and interacting with API documentation.
+
+                Returns:
+                    fastapi.responses.HTMLResponse: An HTML representation of the
+                    Swagger UI.
+
+                """
                 return get_swagger_ui_html(openapi_url="/openapi.json", title="docs")
 
             @docs_router.get("/redoc", include_in_schema=False)
             async def get_redoc_documentation() -> fastapi.responses.HTMLResponse:
+                """
+                Generates and returns HTML documentation for an API using the Redoc
+                library, based on the API's OpenAPI definition at "/openapi.json",
+                with a custom title of "docs".
+
+                Returns:
+                    fastapi.responses.HTMLResponse: HTML content.
+
+                """
                 return get_redoc_html(openapi_url="/openapi.json", title="docs")
 
             @docs_router.get("/openapi.json", include_in_schema=False)
             async def openapi() -> dict[str, Any]:
+                """
+                Generates and returns the OpenAPI schema for the application as a
+                JSON document, with the title, version, and routes defined by the
+                `application` object.
+
+                Returns:
+                    dict[str, Any]: A dictionary containing the OpenAPI specification
+                    for the application.
+
+                """
                 out: dict = get_openapi(title=application.title, version=application.version, routes=application.routes)
                 return out
 

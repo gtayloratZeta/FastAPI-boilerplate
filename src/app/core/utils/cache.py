@@ -284,8 +284,38 @@ def cache(
     """
 
     def wrapper(func: Callable) -> Callable:
+        """
+        Wraps an asynchronous function to implement caching, serializing responses,
+        and invalidating cache keys based on request method, resource ID, and extra
+        data.
+
+        Args:
+            func (Callable): Decorated with `@functools.wraps(func)` to preserve
+                the original function's metadata.
+
+        Returns:
+            Callable: The result of the asynchronous function `func` being executed.
+
+        """
         @functools.wraps(func)
         async def inner(request: Request, *args: Any, **kwargs: Any) -> Response:
+            """
+            Wraps a provided function `func` to implement caching for GET requests.
+            It retrieves data from a cache, executes the function, and then stores
+            the result in the cache with an expiration time for subsequent GET requests.
+
+            Args:
+                request (Request): Passed to the wrapped function `func` along
+                    with `*args` and `**kwargs`.
+                *args (Any): List of positional arguments
+                **kwargs (Any): Dictionary of keyword arguments
+
+            Returns:
+                Response: The result of the decorated function `func` after
+                processing it, caching it for GET requests, and invalidating cache
+                keys for non-GET requests.
+
+            """
             if client is None:
                 raise MissingClientError
 

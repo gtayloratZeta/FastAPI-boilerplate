@@ -29,6 +29,18 @@ class ClientCacheMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: FastAPI, max_age: int = 60) -> None:
+        """
+        Initializes an instance of ClientCacheMiddleware. It takes two parameters:
+        the FastAPI application instance and an optional max_age parameter, which
+        defaults to 60. The method sets the max_age attribute of the instance and
+        calls the parent class's __init__ method.
+
+        Args:
+            app (FastAPI): Required for initialization.
+            max_age (int): Optional, having a default value of 60. It represents
+                the maximum age of a token in minutes.
+
+        """
         super().__init__(app)
         self.max_age = max_age
 
