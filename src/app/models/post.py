@@ -8,6 +8,44 @@ from ..core.db.database import Base
 
 
 class Post(Base):
+    """
+    Represents a database table for posts, mapping columns to attributes with
+    attributes such as auto-incrementing IDs, foreign keys, timestamps, and deletion
+    flags, facilitating data storage and retrieval in a database system.
+
+    Attributes:
+        __tablename__ (str): Used to specify the name of the database table
+            associated with the `Post` class. In this case, it is set to `"post"`.
+        id (Mapped[int]): Mapped to a column named "id" in the database table
+            "post". It is an autoincrementing primary key, meaning it will be
+            automatically assigned a unique integer value when a new post is
+            created, and it cannot be null.
+        created_by_user_id (Mapped[int]): Mapped to a column in the "post" table.
+            It references the "id" column of the "user" table through a foreign
+            key relationship. This establishes a connection between a post and its
+            creator.
+        title (Mapped[str]): Mapped to a database column named "title" with a
+            maximum length of 30 characters.
+        text (Mapped[str]): Mapped to a database column of type String with a
+            maximum length of 63206 characters.
+        uuid (Mapped[uuid_pkg.UUID]): Assigned a unique identifier using the
+            `default_factory` parameter of the `mapped_column` function, which
+            generates a random UUID using the `uuid4` function from the `uuid_pkg`
+            package.
+        media_url (Mapped[str | None]): Indexed and has a default value of None.
+        created_at (Mapped[datetime]): Backed by a database column of type DateTime
+            with timezone support. It defaults to the current date and time in UTC
+            when a new post is created.
+        updated_at (Mapped[datetime | None]): Mapped to a database column with the
+            same name. It defaults to None and is mapped to a DateTime column with
+            timezone support, allowing for possible updates to the post.
+        deleted_at (Mapped[datetime | None]): Mapped to a database column with the
+            name "deleted_at". It represents the date and time when a post is
+            deleted. The attribute has a default value of None.
+        is_deleted (Mapped[bool]): Indexed. It defaults to False and can be
+            optionally set to indicate a post's deletion status.
+
+    """
     __tablename__ = "post"
 
     id: Mapped[int] = mapped_column("id", autoincrement=True, nullable=False, unique=True, primary_key=True, init=False)

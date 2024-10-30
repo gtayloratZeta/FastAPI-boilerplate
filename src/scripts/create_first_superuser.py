@@ -16,6 +16,17 @@ logger = logging.getLogger(__name__)
 
 
 async def create_first_user(session: AsyncSession) -> None:
+    """
+    Attempts to create an administrator user if one does not already exist in the
+    database. It retrieves predefined user details from settings, checks for an
+    existing user, and inserts a new user if necessary.
+
+    Args:
+        session (AsyncSession): Used to interact with the database asynchronously.
+            It represents a database session and is used to execute queries and
+            manage the database connection.
+
+    """
     try:
         name = settings.ADMIN_NAME
         email = settings.ADMIN_EMAIL
@@ -69,6 +80,11 @@ async def create_first_user(session: AsyncSession) -> None:
 
 
 async def main():
+    """
+    Establishes a database session using `local_session`, then creates the first
+    user by calling `create_first_user` within this session.
+
+    """
     async with local_session() as session:
         await create_first_user(session)
 

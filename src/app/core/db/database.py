@@ -19,6 +19,15 @@ local_session = sessionmaker(bind=async_engine, class_=AsyncSession, expire_on_c
 
 
 async def async_get_db() -> AsyncSession:
+    """
+    Returns a database session using the `local_session` context manager, yielding
+    the session for use within an asynchronous context.
+
+    Yields:
+        AsyncSession: An asynchronous database session that can be used to execute
+        asynchronous database queries.
+
+    """
     async_session = local_session
     async with async_session() as db:
         yield db

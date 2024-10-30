@@ -12,6 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 async def create_first_tier(session: AsyncSession) -> None:
+    """
+    Checks for the existence of a tier with a specified name, creates it if it
+    does not exist, and logs the result. It handles potential exceptions by logging
+    the error.
+
+    Args:
+        session (AsyncSession): An asynchronous database session, likely used for
+            interacting with a database using an Object-Relational Mapping (ORM)
+            tool such as Alembic.
+
+    """
     try:
         tier_name = config("TIER_NAME", default="free")
 
@@ -32,6 +43,11 @@ async def create_first_tier(session: AsyncSession) -> None:
 
 
 async def main():
+    """
+    Establishes a local database session and uses it to create the first tier of
+    data.
+
+    """
     async with local_session() as session:
         await create_first_tier(session)
 

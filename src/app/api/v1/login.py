@@ -26,6 +26,27 @@ async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
 ) -> dict[str, str]:
+    """
+    Verifies user credentials, generates access and refresh tokens upon successful
+    authentication, and sets the refresh token in a secure cookie with a specified
+    expiration time.
+
+    Args:
+        response (Response): Used to set the response cookies, specifically the
+            refresh token cookie.
+        form_data (Annotated[OAuth2PasswordRequestForm, Depends()]): Annotated
+            with OAuth2PasswordRequestForm, indicating it is a form data object
+            that conforms to the OAuth 2.0 password request form schema, and it
+            is a dependency that must be resolved.
+        db (Annotated[AsyncSession, Depends(async_get_db)]): Injected by the
+            `async_get_db` dependency.
+
+    Returns:
+        dict[str, str]: A dictionary containing two key-value pairs: "access_token"
+        and "token_type", where "access_token" holds the access token and "token_type"
+        is set to "bearer".
+
+    """
     user = await authenticate_user(username_or_email=form_data.username, password=form_data.password, db=db)
     if not user:
         raise UnauthorizedException("Wrong username, email or password.")
@@ -45,6 +66,22 @@ async def login_for_access_token(
 
 @router.post("/refresh")
 async def refresh_access_token(request: Request, db: AsyncSession = Depends(async_get_db)) -> dict[str, str]:
+    """
+    Validates a refresh token, verifies the user's identity, and returns a new
+    access token, which can be used for subsequent API requests.
+
+    Args:
+        request (Request): Used to access the HTTP request object, specifically
+            to retrieve the refresh token from the cookies.
+        db (AsyncSession): Dependent on the `async_get_db` function, which is
+            likely a dependency injection setup to provide a database session for
+            the function.
+
+    Returns:
+        dict[str, str]: A dictionary containing two key-value pairs: "access_token"
+        and "token_type" with values of type str.
+
+    """
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise UnauthorizedException("Refresh token missing.")
